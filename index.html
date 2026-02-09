@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Govinda's Prasadam | User</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PWA Settings -->
+    <meta name="theme-color" content="#FF6D00">
+    <link rel="manifest" href="/manifest.json"> 
+
+    <style>
+        :root {
+            --brand: #FF6D00;       
+            --bg-body: #F0F2F5;     
+            --white: #ffffff;
+            --text-main: #1A1A1A;
+            --success: #00B894;
+            --error: #FF4757;
+            --max-width: 500px;    
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Manrope', sans-serif; }
+        body { background: var(--bg-body); color: var(--text-main); padding-bottom: 90px; user-select: none; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+        
+        .app-container { max-width: var(--max-width); margin: 0 auto; background: #fff; min-height: 100vh; box-shadow: 0 0 50px rgba(0,0,0,0.05); position: relative; overflow-x: hidden; }
+        .hide { display: none !important; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* AUTH UI */
+        #auth-overlay { position: fixed; inset: 0; background: white; z-index: 3000; padding: 30px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+        .logo-ring { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 20px; box-shadow: 0 5px 20px rgba(255,109,0,0.2); }
+        .auth-inp { width: 100%; padding: 15px; border: 1px solid #eee; border-radius: 12px; margin-bottom: 12px; font-size: 1rem; background: #f9f9f9; outline: none; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap:10px; }
+        .btn-brand { background: var(--brand); color: white; box-shadow: 0 5px 15px rgba(255,109,0,0.3); }
+        .btn-google { background: white; border: 1px solid #ddd; color: #333; margin-bottom: 15px; }
+
+        /* HEADER */
+        .app-header { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* MENU & ITEMS */
+        .cat-scroll { display: flex; gap: 15px; overflow-x: auto; padding: 15px; scrollbar-width: none; }
+        .cat-item { min-width: 80px; text-align: center; font-size: 0.8rem; font-weight: 600; opacity: 0.7; }
+        .cat-item.active { opacity: 1; color: var(--brand); font-weight: 800; }
+        .cat-item img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 5px; border: 2px solid transparent; }
+        .cat-item.active img { border-color: var(--brand); }
+        
+        .prod-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
+        .prod-card { background: white; border: 1px solid #eee; border-radius: 16px; padding: 10px; position: relative; }
+        .prod-img { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; background: #eee; margin-bottom: 10px; }
+        .add-btn { background: white; border: 1px solid #ddd; padding: 5px 15px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; position: absolute; bottom: 10px; right: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        /* TOAST */
+        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #222; color: white; padding: 10px 20px; border-radius: 50px; font-size: 0.9rem; z-index: 5000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        #toast.show { opacity: 1; bottom: 120px; }
+
+        /* DEBUG CONSOLE */
+        #debug-log { position: fixed; top: 0; left:0; width:100%; height: 200px; background: rgba(0,0,0,0.8); color: lime; font-family: monospace; font-size: 10px; overflow-y: scroll; z-index: 10000; display: none; padding: 10px; pointer-events: none; }
+
+        .view { display: none; }
+        .view.show { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+        
+        /* Nav */
+        .btm-nav { position: fixed; bottom: 0; left:0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #eee; z-index: 200; }
+        .nav-item { color: #aaa; font-size: 1.2rem; text-align: center; }
+        .nav-item.active { color: var(--brand); }
+
+    </style>
+</head>
+<body>
+
+<div id="debug-log">DEBUG CONSOLE STARTED...</div>
+
+<div class="app-container">
+
+    <!-- LOGIN -->
+    <div id="auth-overlay">
+        <div class="logo-ring"><img src="https://cdn-icons-png.flaticon.com/512/3075/3075977.png" style="width:100%; height:100%;"></div>
+        <h2 style="margin-bottom:20px;">Welcome Back</h2>
+        
+        <button class="btn btn-google" onclick="googleLogin()">
+            <i class="fa-brands fa-google"></i> Login with Google
+        </button>
+        <p class="divider">OR</p>
+        <div id="login-box">
+            <input type="email" id="email" class="auth-inp" placeholder="Email">
+            <input type="password" id="pass" class="auth-inp" placeholder="Password">
+            <button class="btn btn-brand" onclick="emailLogin()">Login</button>
+            <p style="margin-top:15px; font-size:0.9rem; color:#666;" onclick="document.getElementById('reg-box').classList.remove('hide'); document.getElementById('login-box').classList.add('hide')">Create Account</p>
+        </div>
+        <div id="reg-box" class="hide">
+            <input type="text" id="r-name" class="auth-inp" placeholder="Full Name">
+            <input type="email" id="r-email" class="auth-inp" placeholder="Email">
+            <input type="password" id="r-pass" class="auth-inp" placeholder="Password">
+            <button class="btn btn-brand" onclick="emailSignup()">Sign Up</button>
+            <p style="margin-top:15px; font-size:0.9rem; color:#666;" onclick="document.getElementById('login-box').classList.remove('hide'); document.getElementById('reg-box').classList.add('hide')">Back to Login</p>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="app-header hide" id="header-main">
+        <div style="font-weight: 800; font-size: 1.2rem;">Govinda's</div>
+        <!-- NOTIFICATION TEST BUTTON -->
+        <i class="fa-solid fa-bell" style="color:var(--brand); cursor:pointer;" onclick="requestNotif()"></i>
+    </header>
+
+    <!-- HOME VIEW -->
+    <div id="view-home" class="view hide">
+        <div class="cat-scroll" id="cat-box"></div>
+        <div class="prod-grid" id="prod-box"></div>
+    </div>
+
+    <!-- CART VIEW -->
+    <div id="view-cart" class="view hide" style="padding:20px;">
+        <h2>Your Plate</h2>
+        <div id="cart-items" style="margin-top:20px;"></div>
+        <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
+             <h3>Total: ₹<span id="c-total">0</span></h3>
+             <input type="text" id="d-name" class="auth-inp" style="margin-top:15px;" placeholder="Your Name">
+             <input type="tel" id="d-phone" class="auth-inp" placeholder="Phone Number">
+             <input type="text" id="d-addr" class="auth-inp" placeholder="Address">
+             <button class="btn btn-brand" onclick="placeOrder()">PLACE ORDER <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div id="view-profile" class="view hide" style="padding:30px;">
+        <h2 id="u-name">User</h2>
+        <p id="u-email" style="color:#666; margin-bottom:20px;">user@mail.com</p>
+        <button class="btn btn-brand" onclick="requestNotif()" style="margin-bottom:15px;">Enable Notifications 🔔</button>
+        <button class="btn btn-sec" onclick="signOut(auth); location.reload()">Logout</button>
+        
+        <h4 style="margin-top:30px;">Recent Orders</h4>
+        <div id="my-orders"></div>
+        
+        <div style="margin-top:50px; font-size:0.7rem; color:#ccc; text-align:center;">
+            Developer: Santosh<br>Version: 10.0 (Push Vercel Fixed)
+        </div>
+    </div>
+
+    <!-- NAV -->
+    <nav class="btm-nav hide" id="nav-main">
+        <div class="nav-item active" onclick="nav('home')"><i class="fa-solid fa-house"></i></div>
+        <div class="nav-item" onclick="nav('cart')"><i class="fa-solid fa-bag-shopping"></i></div>
+        <div class="nav-item" onclick="nav('profile')"><i class="fa-solid fa-user"></i></div>
+    </nav>
+
+    <div id="toast">Msg</div>
+
+</div>
+
+<!-- FIREBASE SCRIPTS -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getDatabase, ref, update, onValue, set, push, query, limitToLast, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js";
+
+    // 🔴 LOG CONFIG (Dikhne ke liye ki error kya hai)
+    function log(msg) {
+        console.log(msg);
+        const d = document.getElementById('debug-log');
+        d.innerHTML = `> ${msg}<br>` + d.innerHTML;
+        // d.style.display = 'block'; // Uncomment if you want to see logs on screen
+    }
+
+    const firebaseConfig = {
+       apiKey: "AIzaSyAn38HlPSpz7yRZUmDG7qnedplFjv3WvAE",
+       authDomain: "iskcon-food.firebaseapp.com",
+       databaseURL: "https://iskcon-food-default-rtdb.firebaseio.com",
+       projectId: "iskcon-food",
+       storageBucket: "iskcon-food.firebasestorage.app",
+       messagingSenderId: "987150159471",
+       appId: "1:987150159471:web:c5f8506191ef06d147479a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    let messaging;
+
+    try {
+        messaging = getMessaging(app);
+        log("Messaging Initialized");
+    } catch(e) { log("Msg Init Error: " + e); }
+
+    let USER = null, CART = [], PRODS = [];
+
+    // AUTH
+    onAuthStateChanged(auth, u => {
+        if(u) {
+            USER = u;
+            document.getElementById('auth-overlay').classList.add('hide');
+            document.getElementById('header-main').classList.remove('hide');
+            document.getElementById('nav-main').classList.remove('hide');
+            nav('home');
+            initApp(u.uid);
+            // AUTO ASK PERMISSION
+            setTimeout(window.requestNotif, 2000); 
+        } else {
+            document.getElementById('auth-overlay').classList.remove('hide');
+        }
+    });
+
+    window.googleLogin = () => signInWithPopup(auth, new GoogleAuthProvider());
+    window.emailLogin = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value).catch(e=>alert(e.message));
+    window.emailSignup = () => createUserWithEmailAndPassword(auth, document.getElementById('r-email').value, document.getElementById('r-pass').value)
+        .then(u=> set(ref(db, 'customers/'+u.user.uid), {name: document.getElementById('r-name').value, email:u.user.email}))
+        .catch(e=>alert(e.message));
+
+    // INIT DATA
+    function initApp(uid) {
+        // Menu
+        onValue(ref(db, 'menu'), s => {
+            PRODS = []; 
+            document.getElementById('prod-box').innerHTML = '';
+            if(s.exists()) {
+                s.forEach(c => { PRODS.push({id:c.key, ...c.val()}); renderProd(c.key, c.val()) });
+            }
+        });
+
+        // User Data
+        onValue(ref(db, 'customers/'+uid), s => {
+            if(s.exists()) {
+                document.getElementById('u-name').innerText = s.val().name || "Devotee";
+                document.getElementById('u-email').innerText = s.val().email;
+                if(s.val().address) document.getElementById('d-addr').value = s.val().address;
+                if(s.val().phone) document.getElementById('d-phone').value = s.val().phone;
+                if(s.val().name) document.getElementById('d-name').value = s.val().name;
+            }
+        });
+
+        // My Orders
+        onValue(query(ref(db, 'orders'), limitToLast(10)), s => {
+            const b = document.getElementById('my-orders'); b.innerHTML = '';
+            s.forEach(x => {
+                const o = x.val();
+                if(o.userId === uid) {
+                    let st = o.status;
+                    let col = st==='completed'?'#00B894':(st==='cancelled'?'#FF4757':'#FFA500');
+                    b.innerHTML = `<div style="padding:15px; border:1px solid #eee; margin-bottom:10px; border-radius:12px; background:#fff; border-left:5px solid ${col};">
+                        <div class="flex-between"><b>Order #${x.key.slice(-4)}</b> <b style="color:${col}">${st.toUpperCase()}</b></div>
+                        <div style="font-size:0.8rem; color:#666; margin-top:5px;">₹${o.total} • ${new Date(o.createdAt).toLocaleDateString()}</div>
+                    </div>` + b.innerHTML;
+                }
+            });
+        });
+        
+        // FOREGROUND MESSAGE LISTENER
+        onMessage(messaging, (payload) => {
+            console.log('Message received. ', payload);
+            toast("🔔 " + payload.notification.title + ": " + payload.notification.body);
+            // Optional: Play Sound here if needed
+            new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3').play().catch(e=>console.log("Audio Blocked"));
+        });
+    }
+
+    // --- NOTIFICATION CORE ---
+    window.requestNotif = () => {
+        log("Requesting Permission...");
+        if (!('serviceWorker' in navigator)) { log("No Service Worker Support"); return alert("Browser not supported"); }
+
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                log("Permission GRANTED");
+                
+                // REGISTER SW MANUALLY to ensure scope is correct
+                navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                .then((registration) => {
+                    log("SW Registered: " + registration.scope);
+                    
+                    getToken(messaging, { 
+                        serviceWorkerRegistration: registration,
+                        vapidKey: "BKe_6hztgASeRvSmMH4pySaGwP51GLiSN7AM6vINEyWNL63IRkYjJ7JZ0ttO8kd-d0000toFA-jOikooqTUU0Ck" 
+                    }).then((currentToken) => {
+                        if (currentToken) {
+                           log("Token: " + currentToken.substring(0,10) + "...");
+                           update(ref(db, `customers/${USER.uid}`), { fcmToken: currentToken })
+                           .then(()=> toast("Notifications Active! ✅"))
+                           .catch(e=> log("DB Save Error: " + e));
+                        } else {
+                           log('No registration token available.');
+                        }
+                    }).catch((err) => {
+                        log('An error occurred while retrieving token. ' + err);
+                    });
+
+                }).catch(e => log("SW Reg Fail: " + e));
+
+            } else {
+                log("Permission DENIED");
+                alert("Please Allow Notifications in Settings.");
+            }
+        });
+    };
+
+    // CART & UI
+    function renderProd(id, p) {
+        document.getElementById('prod-box').innerHTML += `
+        <div class="prod-card" onclick="add('${id}')">
+            <img src="${p.image}" class="prod-img">
+            <div style="font-weight:700;">${p.name}</div>
+            <div style="font-size:0.9rem; color:#888;">₹${p.price}</div>
+            <div class="add-btn">ADD +</div>
+        </div>`;
+    }
+
+    window.add = (id) => { 
+        const p = PRODS.find(x=>x.id==id);
+        CART.push(p); toast("Added "+p.name);
+        nav('cart');
+    };
+
+    window.nav = (p) => {
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('show','hide'));
+        document.querySelectorAll('.view').forEach(v=>v.classList.add('hide'));
+        document.getElementById('view-'+p).classList.add('show');
+        document.getElementById('view-'+p).classList.remove('hide');
+        
+        if(p==='cart') {
+            const b = document.getElementById('cart-items'); b.innerHTML = '';
+            let t = 0;
+            CART.forEach((x,i) => {
+                t += parseInt(x.price);
+                b.innerHTML += `<div class="flex-between" style="padding:10px 0; border-bottom:1px solid #eee;">
+                    <div>${x.name}</div>
+                    <div style="font-weight:bold;">₹${x.price} <i class="fa-solid fa-xmark" style="color:red; margin-left:10px;" onclick="CART.splice(${i},1); nav('cart')"></i></div>
+                </div>`;
+            });
+            document.getElementById('c-total').innerText = t;
+            if(CART.length===0) b.innerHTML = "<center style='color:#999; margin-top:20px;'>Empty Plate</center>";
+        }
+    }
+
+    window.placeOrder = () => {
+        if(CART.length===0) return alert("Cart Empty");
+        const ord = {
+            items: CART,
+            total: document.getElementById('c-total').innerText,
+            userId: USER.uid,
+            userName: document.getElementById('d-name').value,
+            userPhone: document.getElementById('d-phone').value,
+            address: document.getElementById('d-addr').value,
+            status: 'placed',
+            createdAt: serverTimestamp()
+        };
+        // Ask for notif again just in case
+        window.requestNotif();
+
+        push(ref(db, 'orders'), ord).then(()=>{
+            alert("Order Placed! Check Profile.");
+            CART = []; nav('profile');
+        });
+    };
+
+    function toast(m){
+        const t = document.getElementById('toast');
+        t.innerText = m; t.classList.add('show');
+        setTimeout(()=>t.classList.remove('show'), 3000);
+    }
+</script>
+</body>
+</html>
